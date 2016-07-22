@@ -1,0 +1,5 @@
+location ${NGINX_URL_PREFIX} {
+     #include ${unit_conf}.extra;
+
+     alias ${content_dir}/;
+}
