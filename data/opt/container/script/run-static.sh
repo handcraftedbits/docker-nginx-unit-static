@@ -2,6 +2,14 @@
 
 . /opt/container/script/unit-utils.sh
 
+content_dir=/opt/container/shared/var/www/static-`randomInt`
+
+function onStaticUnitStopped () {
+    onProcessStopped ${1} ${2}
+
+    rm -rf ${content_dir}
+}
+
 # Check required environment variables and fix the NGINX unit configuration.
 
 checkCommonRequiredVariables
@@ -15,15 +23,17 @@ fi
 
 notifyUnitLaunched
 
-content_dir=/var/www/static-`randomInt`
-filename=`copyUnitConf nginx-unit-static`
+unitConf=`copyUnitConf nginx-unit-static`
 
-ln -s /opt/container/www-static ${content_dir}
+mkdir -p /opt/container/shared/var/www
+cp -R /opt/container/www-static ${content_dir}
 
-fileSubstitute ${filename} content_dir ${content_dir}
+fileSubstitute ${unitConf} content_dir ${content_dir}
 
 notifyUnitStarted
 
+logUrlPrefix "static content located in ${content_dir}"
+
 # Not technically needed, but when using Docker Compose it looks nicer to not have this container exit.
 
-tail -f /dev/null
+startProcessWithTrap onStaticUnitStopped ${unitConf} tail -f /dev/null
